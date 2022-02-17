@@ -175,7 +175,7 @@ let mk_default () =
            (-8591268803865043407L)
            6388613595849772044L
 
-
+#if OCAML_VERSION < (5,0,0)
 let random_key = mk_default ()
 
 let bits () = State.bits random_key
@@ -202,3 +202,33 @@ let split () = State.split random_key
 
 let get_state () = State.copy random_key
 let set_state s = State.assign random_key s
+#else
+let random_key =
+  Domain.DLS.new_key ~split_from_parent:State.split mk_default
+
+let bits () = State.bits (Domain.DLS.get random_key)
+let int bound = State.int (Domain.DLS.get random_key) bound
+let full_int bound = State.full_int (Domain.DLS.get random_key) bound
+let int32 bound = State.int32 (Domain.DLS.get random_key) bound
+let nativeint bound = State.nativeint (Domain.DLS.get random_key) bound
+let int64 bound = State.int64 (Domain.DLS.get random_key) bound
+let float scale = State.float (Domain.DLS.get random_key) scale
+let bool () = State.bool (Domain.DLS.get random_key)
+let bits32 () = State.bits32 (Domain.DLS.get random_key)
+let bits64 () = State.bits64 (Domain.DLS.get random_key)
+let nativebits () = State.nativebits (Domain.DLS.get random_key)
+
+let full_init seed = State.reinit (Domain.DLS.get random_key) seed
+let init seed = full_init [| seed |]
+let self_init () = full_init (random_seed())
+
+
+(* Splitting *)
+
+let split () = State.split (Domain.DLS.get random_key)
+
+(* Manipulating the current state. *)
+
+let get_state () = State.copy (Domain.DLS.get random_key)
+let set_state s = State.assign (Domain.DLS.get random_key) s
+#endif

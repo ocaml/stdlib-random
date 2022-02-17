@@ -1,4 +1,7 @@
 (library
  (public_name random5)
  (foreign_stubs (language c) (names prng))
+ (preprocess
+  (action
+   (run %{bin:cppo} -V OCAML:%{ocaml_version} %{input-file})))
 )
