@@ -1,0 +1,18 @@
+(test
+ (name random5_ocaml_test)
+ (libraries random5.ocaml)
+ (modules Random5_ocaml_test)
+)
+
+(test
+ (name random5_test)
+ (libraries random5)
+ (modules Random5_test)
+)
+
+
+(test
+ (name random4_test)
+ (libraries random4)
+ (modules Random4_test)
+)
