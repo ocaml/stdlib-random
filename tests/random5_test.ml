@@ -38,4 +38,5 @@ else
    -7496928808547424321L]
 
 let () =
-  assert (Random5.init 100; List.init 100 (fun _ -> Random5.bits64 ()) = ref )
+  assert (Random5.init 100; List.init 100 (fun _ -> Random5.bits64 ()) = ref );
+  assert (Random5o.init 100; List.init 100 (fun _ -> Random5o.bits64 ()) = ref );
