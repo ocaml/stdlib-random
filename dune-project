@@ -12,13 +12,12 @@
 (package
  (name random5)
  (synopsis "OCaml 5 Random generator compatibility layer")
- (description "random5 allows you to depend on the new PRNG introduced in OCaml 5.0, independently
+ (description "The random5 package provides support the new implementation of the Random module in OCaml 5.0, independently
 of the version of your compiler.")
 )
 
 (package
  (name random4)
  (synopsis "OCaml 4 Random generator compatibility layer")
- (description "random4 allows you to depend on the PRNG used by OCaml 4 (from 4.00.0 to 4.14), independently
-of the version of your compiler.")
-)
+ (description "The random4 package provides support for the implementation of the Random module used in OCaml 4.*, independently
+of the version of your compiler."))
