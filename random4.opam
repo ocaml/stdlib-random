@@ -7,8 +7,8 @@ of the version of your compiler."""
 maintainer: ["Florian Angeletti, <octa@polychoron.fr>"]
 authors: ["Damien Doligez, Xavier Leroy"]
 license: "LGPL-2.1-or-later WITH OCaml-LGPL-linking-exception"
-homepage: "https://github.com/Octachron/RandomV"
-bug-reports: "https://github.com/Octachron/RandomV/issues"
+homepage: "https://github.com/ocaml/randomV"
+bug-reports: "https://github.com/ocaml/randomV/issues"
 depends: [
   "dune" {>= "3.0"}
   "odoc" {with-doc}
@@ -27,4 +27,4 @@ build: [
     "@doc" {with-doc}
   ]
 ]
-dev-repo: "git+https://github.com/Octachron/RandomV.git"
+dev-repo: "git+https://github.com/ocaml/randomV.git"

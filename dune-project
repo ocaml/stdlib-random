@@ -7,7 +7,7 @@
 (license "LGPL-2.1-or-later WITH OCaml-LGPL-linking-exception")
 (maintainers "Florian Angeletti, <octa@polychoron.fr>")
 (authors "Damien Doligez, Xavier Leroy")
-(source (github Octachron/RandomV))
+(source (github ocaml/randomV))
 
 (package
  (name random5)
