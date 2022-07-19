@@ -12,6 +12,7 @@ homepage: "https://github.com/ocaml/randomV"
 bug-reports: "https://github.com/ocaml/randomV/issues"
 depends: [
   "dune" {>= "3.0"}
+  "ocaml" {>= "4.08.0"}
   "odoc" {with-doc}
 ]
 build: [

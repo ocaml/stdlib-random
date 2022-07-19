@@ -46,6 +46,29 @@ module State = struct
   let copy s =
     let s' = create() in assign s' s; s'
 
+(* Compatibility functions *)
+#if OCAML_VERSION < (4,8,0)
+  let set_int64_le b off n =
+    let n = ref n in
+    for i = 0 to 7 do
+      Bytes.set b (off+i) Int64.(Char.unsafe_chr @@ Int64.to_int @@ logand !n 0xFFL);
+      n := Int64.(shift_right !n 8)
+    done
+#else
+  let set_int64_le = Bytes.set_int64_le
+#endif
+#if OCAML_VERSION < (4,13,0)
+  let get_int64_le s off =
+    let res = ref Int64.zero in
+    for i = 7 downto 0 do
+      let v = Int64.of_int (Char.code s.[off+i]) in
+      res := Int64.(add v (shift_left !res 8))
+    done;
+    !res
+#else
+  let get_int64_le = String.get_int64_le
+#endif
+
   (* The seed is an array of integers.  It can be just one integer,
      but it can also be 12 or more bytes.  To hide the difference,
      we serialize the array as a sequence of bytes, then hash the
@@ -55,16 +78,16 @@ module State = struct
     let n = Array.length seed in
     let b = Bytes.create (n * 8 + 1) in
     for i = 0 to n-1 do
-      Bytes.set_int64_le b (i * 8) (Int64.of_int seed.(i))
+      set_int64_le b (i * 8) (Int64.of_int seed.(i))
     done;
     Bytes.set b (n * 8) '\x01';
     let d1 = Digest.bytes b in
     Bytes.set b (n * 8) '\x02';
     let d2 = Digest.bytes b in
-    set s (String.get_int64_le d1 0)
-          (String.get_int64_le d1 8)
-          (String.get_int64_le d2 0)
-          (String.get_int64_le d2 8)
+    set s (get_int64_le d1 0)
+          (get_int64_le d1 8)
+          (get_int64_le d2 0)
+          (get_int64_le d2 8)
 
   let make seed =
     let s = create() in reinit s seed; s
@@ -221,7 +244,6 @@ let nativebits () = State.nativebits (Domain.DLS.get random_key)
 let full_init seed = State.reinit (Domain.DLS.get random_key) seed
 let init seed = full_init [| seed |]
 let self_init () = full_init (random_seed())
-
 
 (* Splitting *)
 

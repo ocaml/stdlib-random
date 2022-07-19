@@ -35,6 +35,15 @@ struct LXM_state {
 
 #define LXM_val(v) ((struct LXM_state *) Caml_ba_data_val(v))
 
+#ifndef Caml_inline
+// Define Caml_inline for OCaml <= 4.12
+#if defined(_MSC_VER) && !defined(__cplusplus)
+#define Caml_inline static __inline
+#else
+#define Caml_inline static inline
+#endif
+#endif
+
 Caml_inline uint64_t rotl(const uint64_t x, int k) {
   return (x << k) | (x >> (64 - k));
 }

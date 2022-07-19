@@ -14,6 +14,7 @@ bug-reports: "https://github.com/ocaml/randomV/issues"
 depends: [
   "dune" {>= "3.0"}
   "cppo" {dev}
+  "ocaml" {>= "4.08.0"}
   "odoc" {with-doc}
 ]
 build: [
