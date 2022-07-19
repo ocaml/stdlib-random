@@ -12,6 +12,7 @@
 
 (package
  (name random5)
+ (depends (cppo :dev))
  (synopsis "OCaml 5 Random generator compatibility layer")
  (description
 "The random5 package provides an implementations of the Random module
