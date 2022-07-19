@@ -1,5 +1,5 @@
-Release 1.0
------------
+Release 1.0.0
+-------------
 
    - random5 package: compiler-independent implementation of the Random module of OCaml 5
    - random5.ocaml package: compiler-independent implementation of the Random module of OCaml 5, in pure OCaml
