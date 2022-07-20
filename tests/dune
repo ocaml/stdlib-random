@@ -9,3 +9,9 @@
  (libraries random5 random5.ocaml)
  (modules Random5_test)
 )
+
+(test
+ (name consistency)
+ (libraries random4 random5)
+ (modules Consistency)
+)
