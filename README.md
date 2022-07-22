@@ -15,5 +15,12 @@ The `random5.ocaml` package provides a pure OCaml alternative to the `random5` p
 
 ## Random4 package
 
-The `random4` package exposes the  lagged-Fibonacci F(55, 24, +) with a modified addition
-function used from OCaml 3.12 to OCaml 4.14 .
+The `random4` package exposes the  lagged-Fibonacci F(55, 24, +) PRNG with a modified addition function used from OCaml 3.12 to OCaml 4.14 .
+
+
+## Random3 package
+
+The `random3` package exposes the  lagged-Fibonacci F(55, 24, +) PRNG used from OCaml
+3.07 to OCaml 3.12 . Note that the state of this generator is not marshallable across
+architecture with different word size to keep compatibility with the OCaml 3 PRNG.
+

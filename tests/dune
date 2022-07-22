@@ -1,4 +1,10 @@
 (test
+ (name random3_test)
+ (libraries random3)
+ (modules Random3_test)
+)
+
+(test
  (name random4_test)
  (libraries random4)
  (modules Random4_test)
