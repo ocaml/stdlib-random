@@ -6,7 +6,7 @@
 
 (test
  (name random5_test)
- (libraries random5 random5.ocaml)
+ (libraries randomV.v5 randomV.v5o)
  (modules Random5_test)
 )
 

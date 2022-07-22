@@ -11,21 +11,10 @@
 (source (github ocaml/randomV))
 
 (package
- (name random5)
+ (name randomV)
  (depends (cppo :dev) (ocaml (>= 4.08.0)))
- (synopsis "OCaml 5 Random generator compatibility layer")
+ (synopsis "Versioned Random module from the OCaml 5 standard library")
  (description
-"The random5 package provides an implementations of the Random module
-of OCaml 5, independently of the version of the OCaml compiler.
-A pure OCaml implementation of the module is also provided.")
-)
-
-
-(package
- (name random4)
- (depends (ocaml (>= 4.08.0)))
- (synopsis "OCaml 4 Random generator compatibility layer")
- (description
-"The random4 package provides an implementation of the Random module of
-OCaml 4, independently of the version of the OCaml compiler.")
+"The randomV package provides implementations of the all implementations
+of the Random module ever used in the OCaml standard library.")
 )
