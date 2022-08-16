@@ -11,16 +11,11 @@
 (*                                                                     *)
 (***********************************************************************)
 
-(* Pseudo-random number generator
-   This is a lagged-Fibonacci F(55, 24, +) with a modified addition
-   function to enhance the mixing of bits.
-   If we use normal addition, the low-order bit fails tests 1 and 7
-   of the Diehard test suite, and bits 1 and 2 also fail test 7.
-   If we use multiplication as suggested by Marsaglia, it doesn't fare
-   much better.
-   By mixing the bits of one of the numbers before addition (XOR the
-   5 high-order bits into the low-order bits), we get a generator that
-   passes all the Diehard tests.
+(* "Linear feedback shift register" pseudo-random number generator. *)
+(* References: Robert Sedgewick, "Algorithms", Addison-Wesley *)
+
+(* The PRNG is a linear feedback shift register.
+   It is seeded by a MD5-based PRNG.
 *)
 
 external random_seed: unit -> int array = "caml_sys_random_seed"
@@ -158,13 +153,14 @@ module State = struct
     then fun s bound -> Nativeint.of_int32 (int32 s (Nativeint.to_int32 bound))
     else fun s bound -> Int64.to_nativeint (int64 s (Int64.of_nativeint bound))
 
-
-  (* Returns a float 0 <= x <= 1 with at most 60 bits of precision. *)
+  (* Returns a float 0 <= x < 1 with at most 90 bits of precision. *)
   let rawfloat s =
-    let scale = 1073741824.0  (* 2^30 *)
-    and r1 = Stdlib.float (bits s)
-    and r2 = Stdlib.float (bits s)
-    in (r1 /. scale +. r2) /. scale
+    let scale = 1073741824.0
+    and r0 = float_of_int (bits s)
+    and r1 = float_of_int (bits s)
+    and r2 = float_of_int (bits s)
+    in ((r0 /. scale +. r1) /. scale +. r2) /. scale
+
 
 
   let float s bound = rawfloat s *. bound
