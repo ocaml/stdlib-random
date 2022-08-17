@@ -17,12 +17,12 @@
  (description
 "The stdlib-random package provides a stable and compiler-independent
 implementation of all the PRNGs used in the Random module.
-Those PRGNs are available in the various subpackages:
+Those PRNGs are available in the various libraries:
 - stdlib-random.v3: OCaml 3.07 to 3.11 PRNG
 - stdlib-random.v4: OCaml 3.12 to 4.14 PRNG
-- stdlib-random.v5: OCaml 5.0-? PRNG
-- stdlib-random.v5o: pure OCaml version of OCaml 5 PRNG
-Those subpackages can be used together and the signature of their
-Random$n module has been extended to the latest signature whenever possible..
+- stdlib-random.v5: current OCaml 5.0 PRNG
+- stdlib-random.v5o: pure OCaml version of the OCaml 5 PRNG
+All those libraries can be used together and the signature of their
+Random$n module has been extended to the latest signature whenever possible.
 ")
 )
