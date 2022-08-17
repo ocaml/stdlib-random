@@ -8,6 +8,12 @@ from the OCaml standard library independently of the compiler version.
 The `stdlib-random.v5` library uses the same LXM pseudo-random number generator as
 the one used in OCaml 5.
 
+For versions of OCaml that support multiple domains, the global PRNG of this library
+is a domain local state rather than a global state to avoid any potential contention
+issue on this global PRNG.
+Moreover, whenever a new domain is spawn, its global PRNG is split from the
+PRNG of the parent domain which ensures that both PRNGs are essentially
+independent.
 
 ## stdlib-random.v5o library
 
