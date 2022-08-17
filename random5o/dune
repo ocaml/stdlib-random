@@ -1,5 +1,5 @@
 (library
- (public_name randomV.v5o) (name random5o)
+ (public_name stdlib-random.v5o) (name random5o)
  (preprocess
   (action(run %{bin:cppo} -V OCAML:%{ocaml_version} %{input-file}))
  )

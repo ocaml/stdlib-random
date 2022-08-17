@@ -1,5 +1,5 @@
 (library
- (public_name randomV.v5) (name random5)
+ (public_name stdlib-random.v5) (name random5)
  (foreign_stubs (language c) (names prng))
  (preprocess
   (action

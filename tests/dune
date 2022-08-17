@@ -11,15 +11,14 @@
 )
 
 (test
- (name
-   random5_test)
- (libraries randomV.v5 randomV.v5o)
+ (name random5_test)
+ (libraries random5 random5o)
  (modules Random5_test)
 )
 
 (test
  (name consistency)
- (libraries random3 random4 random5)
+ (libraries random3 random4 random5 random5o)
  (preprocess
   (action
    (run %{bin:cppo} -V OCAML:%{ocaml_version} %{input-file})))

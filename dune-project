@@ -1,5 +1,5 @@
-(lang dune 3.0)
-(name randomV)
+(lang dune 2.7)
+(name stdlib-random)
 (version 1.0.0)
 
 (generate_opam_files true)
@@ -11,10 +11,18 @@
 (source (github ocaml/randomV))
 
 (package
- (name randomV)
+ (name stdlib-random)
  (depends (cppo :dev) (ocaml (>= 4.08.0)))
- (synopsis "Versioned Random module from the OCaml 5 standard library")
+ (synopsis "Versioned Random module from the OCaml standard library")
  (description
-"The randomV package provides implementations of the all implementations
-of the Random module ever used in the OCaml standard library.")
+"The stdlib-random package provides a stable and compiler-independent
+implementation of all the PRNGs used in the Random module.
+Those PRGNs are available in the various subpackages:
+- stdlib-random.v3: OCaml 3.07 to 3.11 PRNG
+- stdlib-random.v4: OCaml 3.12 to 4.14 PRNG
+- stdlib-random.v5: OCaml 5.0-? PRNG
+- stdlib-random.v5o: pure OCaml version of OCaml 5 PRNG
+Those subpackages can be used together and the signature of their
+Random$n module has been extended to the latest signature whenever possible..
+")
 )

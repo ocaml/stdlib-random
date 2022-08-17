@@ -1,3 +1,3 @@
 (library
-   (public_name randomV.v3) (name random3)
+   (public_name stdlib-random.v3) (name random3)
 )
