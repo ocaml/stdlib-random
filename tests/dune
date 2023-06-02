@@ -16,6 +16,13 @@
  (modules Random5_test)
 )
 
+(tests
+ (names binary_string_roundtrip)
+ (modules binary_string_roundtrip)
+ (libraries random3 random4 random5 random5o)
+)
+
+
 (test
  (name consistency)
  (libraries random3 random4 random5 random5o)
