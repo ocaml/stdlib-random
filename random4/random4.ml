@@ -37,6 +37,51 @@ module State = struct
     st1.idx <- st2.idx
 
 
+  let serialization_prefix =
+    "lfsr2:"
+    (* "lfsr" denotes the algorithm currently in use, and '2' is
+       a version number. Each Random algorithm or serialization format
+       should have distinct prefix , so that users get a clean error
+       instead of believing that they faithfully reproduce their
+       previous state and in fact get a differrent stream.
+
+       Note that there is no constraint to keep the same
+       "<name><ver>:<data>" format or message size in future versions,
+       we could change the format completely if we wanted as long
+       as there is no confusion possible with the previous formats. *)
+
+  let serialization_prefix_len =
+    String.length serialization_prefix
+
+  let to_binary_string s =
+    let prefix = serialization_prefix in
+    let preflen = serialization_prefix_len in
+    let buf = Bytes.create (preflen + 55 * 4 + 1) in
+    Bytes.blit_string prefix 0 buf 0 preflen;
+    for i = 0 to 54 do
+      Bytes.set_int32_le buf (preflen + i * 4)
+        (Int32.of_int (s.st.(i) land 0x3FFFFFFF))
+    done;
+    Bytes.set_int8 buf (preflen + 55 * 4) s.idx;
+    Bytes.unsafe_to_string buf
+
+  let of_binary_string buf =
+    let prefix = serialization_prefix in
+    let preflen = serialization_prefix_len in
+    if String.length buf <> preflen + 1 + 55 * 4
+       || not (String.starts_with ~prefix buf)
+    then
+      failwith
+        ("Random4.State.of_binary_string: expected a format \
+          compatible with Random4 PRNG");
+    let st = new_state () in
+    for i=0 to 54 do
+      let n = String.get_int32_le buf (preflen + i * 4) in
+      st.st.(i) <- Int32.(to_int @@ logand n 0x3FFFFFFFl)
+    done;
+    st.idx <- String.get_int8 buf (preflen + 55 * 4);
+    st
+
   let full_init s seed =
     let combine accu x = Digest.string (accu ^ Int.to_string x) in
     let extract d =
