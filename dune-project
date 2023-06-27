@@ -1,6 +1,6 @@
 (lang dune 2.7)
 (name stdlib-random)
-(version 1.0.0)
+(version 1.1.0)
 
 (generate_opam_files true)
 
