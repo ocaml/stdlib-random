@@ -1,3 +1,13 @@
+Release 1.1.0
+-------------
+
+   - `stdlib-random.v5` and `stdlib-random.v5o`: import `Random.state`
+     serialization functions: `of_binary_string` and `to_binary_string` from
+     OCaml 5.1.
+
+   - `stdlib-random.v3` and `stdlib-random.v4` library: implement `Random.state`
+     serialization functions: `of_binary_string` and `to_binary_string`.
+
 Release 1.0.0
 -------------
 
