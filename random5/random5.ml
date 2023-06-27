@@ -67,28 +67,7 @@ module State = struct
     done;
     Bytes.unsafe_to_string buf
 
-  let of_binary_string buf =
-    let prefix = serialization_prefix in
-    let preflen = serialization_prefix_len in
-    if String.length buf <> preflen + 4 * 8
-       || not (String.starts_with ~prefix buf)
-    then
-      failwith
-        ("Random.State.of_binary_string: expected a format \
-          compatible with OCaml " ^ Sys.ocaml_version);
-    let i1 = String.get_int64_le buf (preflen + 0 * 8) in
-    let i2 = String.get_int64_le buf (preflen + 1 * 8) in
-    let i3 = String.get_int64_le buf (preflen + 2 * 8) in
-    let i4 = String.get_int64_le buf (preflen + 3 * 8) in
-    mk i1 i2 i3 i4
-
-  let assign (dst: t) (src: t) =
-    Array1.blit src dst
-
-  let copy s =
-    let s' = create() in assign s' s; s'
-
-(* Compatibility functions *)
+(* Compatibility functions Imported from standard library *)
 #if OCAML_VERSION < (4,8,0)
   let set_int64_le b off n =
     let n = ref n in
@@ -107,9 +86,41 @@ module State = struct
       res := Int64.(add v (shift_left !res 8))
     done;
     !res
+  let starts_with ~prefix s =
+    let open String in
+    let len_s = length s
+    and len_pre = length prefix in
+    let rec aux i =
+      if i = len_pre then true
+      else if unsafe_get s i <> unsafe_get prefix i then false
+      else aux (i + 1)
+    in len_s >= len_pre && aux 0
 #else
   let get_int64_le = String.get_int64_le
+  let starts_with = String.starts_with
 #endif
+
+
+  let of_binary_string buf =
+    let prefix = serialization_prefix in
+    let preflen = serialization_prefix_len in
+    if String.length buf <> preflen + 4 * 8
+       || not (starts_with ~prefix buf)
+    then
+      failwith
+        ("Random.State.of_binary_string: expected a format \
+          compatible with OCaml " ^ Sys.ocaml_version);
+    let i1 = get_int64_le buf (preflen + 0 * 8) in
+    let i2 = get_int64_le buf (preflen + 1 * 8) in
+    let i3 = get_int64_le buf (preflen + 2 * 8) in
+    let i4 = get_int64_le buf (preflen + 3 * 8) in
+    mk i1 i2 i3 i4
+
+  let assign (dst: t) (src: t) =
+    Array1.blit src dst
+
+  let copy s =
+    let s' = create() in assign s' s; s'
 
   (* The seed is an array of integers.  It can be just one integer,
      but it can also be 12 or more bytes.  To hide the difference,

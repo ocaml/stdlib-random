@@ -53,6 +53,31 @@ module State = struct
   let serialization_prefix_len =
     String.length serialization_prefix
 
+(* Compatibility functions Imported from standard library *)
+#if OCAML_VERSION < (4,13,0)
+  let get_int32_le s off =
+    let res = ref Int32.zero in
+    for i = 3 downto 0 do
+      let v = Int32.of_int (Char.code s.[off+i]) in
+      res := Int32.(add v (shift_left !res 8))
+    done;
+    !res
+  let get_int8 s off = Char.code s.[off]
+  let starts_with ~prefix s =
+    let open String in
+    let len_s = length s
+    and len_pre = length prefix in
+    let rec aux i =
+      if i = len_pre then true
+      else if unsafe_get s i <> unsafe_get prefix i then false
+      else aux (i + 1)
+    in len_s >= len_pre && aux 0
+#else
+  let get_int32_le = String.get_int32_le
+  let get_int8 = String.get_int8
+  let starts_with = String.starts_with
+#endif
+
   let to_binary_string s =
     let prefix = serialization_prefix in
     let preflen = serialization_prefix_len in
@@ -69,17 +94,17 @@ module State = struct
     let prefix = serialization_prefix in
     let preflen = serialization_prefix_len in
     if String.length buf <> preflen + 1 + 55 * 4
-       || not (String.starts_with ~prefix buf)
+       || not (starts_with ~prefix buf)
     then
       failwith
         ("Random4.State.of_binary_string: expected a format \
           compatible with Random4 PRNG");
     let st = new_state () in
     for i=0 to 54 do
-      let n = String.get_int32_le buf (preflen + i * 4) in
+      let n = get_int32_le buf (preflen + i * 4) in
       st.st.(i) <- Int32.(to_int @@ logand n 0x3FFFFFFFl)
     done;
-    st.idx <- String.get_int8 buf (preflen + 55 * 4);
+    st.idx <- get_int8 buf (preflen + 55 * 4);
     st
 
   let full_init s seed =

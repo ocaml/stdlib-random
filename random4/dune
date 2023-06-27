@@ -1,3 +1,6 @@
 (library
-   (public_name stdlib-random.v4) (name random4)
+ (public_name stdlib-random.v4) (name random4)
+   (preprocess
+    (action
+     (run %{bin:cppo} -V OCAML:%{ocaml_version} %{input-file})))
 )
