@@ -12,7 +12,7 @@
 
 (package
  (name stdlib-random)
- (depends cppo (ocaml (>= 4.08.0)))
+ (depends (cppo (>= 1.1.0)) (ocaml (>= 4.08.0)))
  (synopsis "Versioned Random module from the OCaml standard library")
  (description
 "The stdlib-random package provides a stable and compiler-independent
