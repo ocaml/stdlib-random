@@ -17,10 +17,11 @@
 )
 
 (tests
- (names binary_string_roundtrip)
- (modules binary_string_roundtrip)
+ (names binary_string_roundtrip binary_string_stability)
+ (modules binary_string_roundtrip binary_string_stability)
  (libraries random3 random4 random5 random5o)
 )
+
 
 
 (test
