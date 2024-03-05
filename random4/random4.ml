@@ -142,7 +142,17 @@ module State = struct
     result
 
 
-  (* Returns 30 random bits as an integer 0 <= x < 1073741824 *)
+  let min_int31 = -0x4000_0000
+      (* = -2{^30}, which is [min_int] for 31-bit integers *)
+  let max_int31 = 0x3FFF_FFFF
+      (* =  2{^30}-1, which is [max_int] for 31-bit integers *)
+  (* avoid integer literals for these, 32-bit OCaml would reject them: *)
+  let min_int32 = -(1 lsl 31)
+      (* = -0x8000_0000 on platforms where [Sys.int_size >= 32] *)
+  let max_int32 = (1 lsl 31) - 1
+      (* =  0x7FFF_FFFF on platforms where [Sys.int_size >= 32] *)
+
+  (* Return 30 random bits as an integer 0 <= x < 2^30 *)
   let bits s =
     s.idx <- (s.idx + 1) mod 55;
     let curval = s.st.(s.idx) in
@@ -152,29 +162,41 @@ module State = struct
     s.st.(s.idx) <- newval30;
     newval30
 
+ let bits32 s =
+    let b1 = Int32.(shift_right_logical (of_int (bits s)) 14) in  (* 16 bits *)
+    let b2 = Int32.(shift_right_logical (of_int (bits s)) 14) in  (* 16 bits *)
+    Int32.(logor b1 (shift_left b2 16))
 
-  let rec intaux s n =
+  let bits64 s =
+    let b1 = Int64.(shift_right_logical (of_int (bits s)) 9) in  (* 21 bits *)
+    let b2 = Int64.(shift_right_logical (of_int (bits s)) 9) in  (* 21 bits *)
+    let b3 = Int64.(shift_right_logical (of_int (bits s)) 8) in  (* 22 bits *)
+    Int64.(logor b1 (logor (shift_left b2 21) (shift_left b3 42)))
+
+  let rec int31aux s n =
     let r = bits s in
     let v = r mod n in
-    if r - v > 0x3FFFFFFF - n + 1 then intaux s n else v
+    if r - v > max_int31 - n + 1 then int31aux s n else v
 
+  (* Return an integer between 0 (included) and [bound] (excluded).
+     The bound must fit in 31-bit signed integers.
+     This function yields the same output regardless of the integer size. *)
   let int s bound =
-    if bound > 0x3FFFFFFF || bound <= 0
+    if bound > max_int31 || bound <= 0
     then invalid_arg "Random.int"
-    else intaux s bound
+    else int31aux s bound
 
   let rec int63aux s n =
-    let max_int_32 = (1 lsl 30) + 0x3FFFFFFF in (* 0x7FFFFFFF *)
     let b1 = bits s in
     let b2 = bits s in
     let (r, max_int) =
-      if n <= max_int_32 then
+      if n <= max_int32 then
         (* 31 random bits on both 64-bit OCaml and JavaScript.
            Use upper 15 bits of b1 and 16 bits of b2. *)
         let bpos =
           (((b2 land 0x3FFFC000) lsl 1) lor (b1 lsr 15))
         in
-          (bpos, max_int_32)
+          (bpos, max_int32)
       else
         let b3 = bits s in
         (* 62 random bits on 64-bit OCaml; unreachable on JavaScript.
@@ -194,8 +216,91 @@ module State = struct
     else if bound > 0x3FFFFFFF then
       int63aux s bound
     else
-      intaux s bound
+      int31aux s bound
 
+ (* Return an integer between 0 (included) and [n] (excluded).
+     [bound] may be any positive [int].  [mask] must be of the form [2{^i}-1]
+     and greater or equal to [n].  Larger values of [mask] make the function
+     run faster (fewer samples are rejected).  Smaller values of [mask]
+     are usable on a wider range of OCaml implementations.  *)
+  let rec int_aux s n mask =
+    (* We start by drawing a non-negative integer in the [ [0, mask] ] range *)
+    let r = Int64.to_int (bits64 s) land mask in
+    let v = r mod n in
+    (* For uniform distribution of the result between 0 included and [n]
+     * excluded, the random number [r] must have been drawn uniformly in
+     * an interval whose length is a multiple of [n]. To achieve this,
+     * we use rejection sampling on the greatest interval [ [0, k*n-1] ]
+     * that fits in [ [0, mask] ].  That is, we reject the
+     * sample if it falls outside of this interval, and draw again.
+     * This is what the test below does, while carefully avoiding
+     * overflows and sparing a division [mask / n]. *)
+    if r - v > mask - n + 1 then int_aux s n mask else v
+
+
+(* Return an integer between [min] (included) and [max] (included).
+     The [nbits] parameter is the size in bits of the signed integers
+     we draw from [s].
+     We must have [-2{^nbits - 1} <= min <= max < 2{^nbits - 1}].
+     Moreover, for the iteration to converge quickly, the interval
+     [[min, max]] should have width at least [2{^nbits - 1}].
+     As the width approaches this lower limit, the average number of
+     draws approaches 2, with a quite high standard deviation (2 + epsilon). *)
+  let rec int_in_large_range s ~min ~max ~nbits =
+    let drop = Sys.int_size - nbits in
+    (* The bitshifts replicate the [nbits]-th bit (sign bit) to higher bits: *)
+    let r = ((Int64.to_int (bits64 s)) lsl drop) asr drop in
+    if r < min || r > max then int_in_large_range s ~min ~max ~nbits else r
+
+  (* Return an integer between [min] (included) and [max] (included).
+     [mask] is as described for [int_aux].
+     [nbits] is as described for [int_in_large_range]. *)
+  let int_in_range_aux s ~min ~max ~mask ~nbits =
+    let span = max - min + 1 in
+    if span <= mask (* [span] is small enough *)
+    && span > 0     (* no overflow occurred when computing [span] *)
+    then
+      (* Just draw a number in [[0, span)] and shift it by [min]. *)
+      min + int_aux s span mask
+    else
+      (* Span too large, use the alternative drawing method. *)
+      int_in_large_range s ~min ~max ~nbits
+
+  (* 31bits version to account for the 31 bit PRNG *)
+  let rec int31_in_large_range s ~min ~max =
+    let r = Int32.to_int (bits32 s) in
+    if r < min || r > max then int31_in_large_range s ~min ~max else r
+
+  let int31_in_range_aux s ~min ~max =
+    let mask = max_int31 in
+    let span = max - min + 1 in
+    if span <= mask (* [span] is small enough *)
+    && span > 0     (* no overflow occurred when computing [span] *)
+    then
+      (* Just draw a number in [[0, span)] and shift it by [min]. *)
+      min + int31aux s span
+    else
+      (* Span too large, use the alternative drawing method. *)
+      int31_in_large_range s ~min ~max
+
+
+  (* Return an integer between [min] (included) and [max] (included).
+     We must have [min <= max]. *)
+  let int_in_range s ~min ~max =
+    if min > max then
+      invalid_arg "Random.int_in_range";
+    (* When both bounds fit in 31-bit signed integers, we use parameters
+       [mask] and [nbits] appropriate for 31-bit integers, so as to
+       yield the same output on all platforms supported by OCaml.
+       When both bounds fit in 32-bit signed integers, we use parameters
+       [mask] and [nbits] appropriate for 32-bit integers, so as to
+       yield the same output on JavaScript and on 64-bit OCaml. *)
+    if min >= min_int31 && max <= max_int31 then
+      int31_in_range_aux s ~min ~max
+    else if min >= min_int32 && max <= max_int32 then
+      int_in_range_aux s ~min ~max ~mask:max_int32 ~nbits:32
+    else
+      int_in_range_aux s ~min ~max ~mask:max_int ~nbits:Sys.int_size
 
   let rec int32aux s n =
     let b1 = Int32.of_int (bits s) in
@@ -211,6 +316,22 @@ module State = struct
     then invalid_arg "Random.int32"
     else int32aux s bound
 
+  (* Return an [int32] between [min] (included) and [max] (included).
+     We must have [min <= max]. *)
+  let rec int32_in_range_aux s ~min ~max =
+    let r = bits32 s in
+    if r < min || r > max then int32_in_range_aux s ~min ~max else r
+
+  let int32_in_range s ~min ~max =
+    if min > max then
+      invalid_arg "Random.int32_in_range"
+    else
+      let span = Int32.succ (Int32.sub max min) in
+      (* Explanation of this test: see comment in [int_in_range_aux]. *)
+      if span <= Int32.zero then
+        int32_in_range_aux s ~min ~max
+      else
+        Int32.add min (int32aux s span)
 
   let rec int64aux s n =
     let b1 = Int64.of_int (bits s) in
@@ -227,12 +348,44 @@ module State = struct
     then invalid_arg "Random.int64"
     else int64aux s bound
 
+  (* Return an [int64] between [min] (included) and [max] (included).
+     We must have [min <= max]. *)
+  let rec int64_in_range_aux s ~min ~max =
+    let r = bits64 s in
+    if r < min || r > max then int64_in_range_aux s ~min ~max else r
 
+  let int64_in_range s ~min ~max =
+    if min > max then
+      invalid_arg "Random.int64_in_range"
+    else
+      let span = Int64.succ (Int64.sub max min) in
+      (* Explanation of this test: see comment in [int_in_range_aux]. *)
+      if span <= Int64.zero then
+        int64_in_range_aux s ~min ~max
+      else
+        Int64.add min (int64aux s span)
+
+  (* Return 32 or 64 random bits as a [nativeint] *)
+  let nativebits =
+    if Nativeint.size = 32
+    then fun s -> Nativeint.of_int32 (bits32 s)
+    else fun s -> Int64.to_nativeint (bits64 s)
+
+  (* Return a [nativeint] between 0 (included) and [bound] (excluded). *)
   let nativeint =
     if Nativeint.size = 32
     then fun s bound -> Nativeint.of_int32 (int32 s (Nativeint.to_int32 bound))
     else fun s bound -> Int64.to_nativeint (int64 s (Int64.of_nativeint bound))
 
+  (* Return a [nativeint] between [min] (included) and [max] (included). *)
+  let nativeint_in_range =
+    if Nativeint.size = 32
+    then fun s ~min ~max ->
+      Nativeint.of_int32 (int32_in_range s
+        ~min:(Nativeint.to_int32 min) ~max:(Nativeint.to_int32 max))
+    else fun s ~min ~max ->
+      Int64.to_nativeint (int64_in_range s
+        ~min:(Int64.of_nativeint min) ~max:(Int64.of_nativeint max))
 
   (* Returns a float 0 <= x <= 1 with at most 60 bits of precision. *)
   let rawfloat s =
@@ -245,22 +398,6 @@ module State = struct
   let float s bound = rawfloat s *. bound
 
   let bool s = (bits s land 1 = 0)
-
-  let bits32 s =
-    let b1 = Int32.(shift_right_logical (of_int (bits s)) 14) in  (* 16 bits *)
-    let b2 = Int32.(shift_right_logical (of_int (bits s)) 14) in  (* 16 bits *)
-    Int32.(logor b1 (shift_left b2 16))
-
-  let bits64 s =
-    let b1 = Int64.(shift_right_logical (of_int (bits s)) 9) in  (* 21 bits *)
-    let b2 = Int64.(shift_right_logical (of_int (bits s)) 9) in  (* 21 bits *)
-    let b3 = Int64.(shift_right_logical (of_int (bits s)) 8) in  (* 22 bits *)
-    Int64.(logor b1 (logor (shift_left b2 21) (shift_left b3 42)))
-
-  let nativebits =
-    if Nativeint.size = 32
-    then fun s -> Nativeint.of_int32 (bits32 s)
-    else fun s -> Int64.to_nativeint (bits64 s)
 
 end
 
@@ -285,9 +422,13 @@ let default = {
 let bits () = State.bits default
 let int bound = State.int default bound
 let full_int bound = State.full_int default bound
+let int_in_range ~min ~max = State.int_in_range default ~min ~max
 let int32 bound = State.int32 default bound
+let int32_in_range ~min ~max = State.int32_in_range default ~min ~max
 let nativeint bound = State.nativeint default bound
+let nativeint_in_range ~min ~max = State.nativeint_in_range default ~min ~max
 let int64 bound = State.int64 default bound
+let int64_in_range ~min ~max = State.int64_in_range default ~min ~max
 let float scale = State.float default scale
 let bool () = State.bool default
 let bits32 () = State.bits32 default

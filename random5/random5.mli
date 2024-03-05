@@ -50,29 +50,96 @@ val bits : unit -> int
 val int : int -> int
 (** [Random5.int bound] returns a random integer between 0 (inclusive)
      and [bound] (exclusive).  [bound] must be greater than 0 and less
-     than 2{^30}. *)
+     than 2{^30}.
+
+    @raise Invalid_argument if [bound] <= 0 or [bound] >= 2{^30}.
+*)
 
 val full_int : int -> int
 (** [Random5.full_int bound] returns a random integer between 0 (inclusive)
      and [bound] (exclusive). [bound] may be any positive integer.
 
-     If [bound] is less than 2{^30}, [Random5.full_int bound] is equal to
-     {!Random5.int}[ bound]. If [bound] is greater than 2{^30} (on 64-bit systems
-     or non-standard environments, such as JavaScript), [Random5.full_int]
-     returns a value, where {!Random5.int} raises {!Invalid_argument}.
-*)
+     If [bound] is less than 2{^31},
+     then [Random.full_int bound] yields identical output
+     across systems with varying [int] sizes.
+
+     If [bound] is less than 2{^30},
+     then [Random.full_int bound] is equal to {!Random.int}[ bound].
+
+     If [bound] is at least 2{^30}
+     (on 64-bit systems, or non-standard environments such as JavaScript),
+     then [Random.full_int] returns a value
+     whereas {!Random.int} raises {!Stdlib.Invalid_argument}.
+
+    @raise Invalid_argument if [bound] <= 0.
+
+    @since 4.13 *)
+
+val int_in_range : min:int -> max:int -> int
+(** [Random5.int_in_range ~min ~max] returns a random integer
+    between [min] (inclusive) and [max] (inclusive).
+    Both [min] and [max] are allowed to be negative;
+    [min] must be less than or equal to [max].
+
+    If both bounds fit in 32-bit signed integers
+    (that is, if -2{^31} <= [min] and [max] < 2{^31}),
+    then [int_in_range] yields identical output
+    across systems with varying [int] sizes.
+
+    @raise Invalid_argument if [min > max].
+
+    @since 5.2 *)
 
 val int32 : Int32.t -> Int32.t
 (** [Random5.int32 bound] returns a random integer between 0 (inclusive)
-     and [bound] (exclusive).  [bound] must be greater than 0. *)
+     and [bound] (exclusive).  [bound] must be greater than 0.
+
+    @raise Invalid_argument if [bound] <= 0.
+*)
+
+val int32_in_range : min:int32 -> max:int32 -> int32
+(** [Random5.int32_in_range ~min ~max] returns a random integer
+    between [min] (inclusive) and [max] (inclusive).
+    Both [min] and [max] are allowed to be negative;
+    [min] must be less than or equal to [max].
+
+    @raise Invalid_argument if [min > max].
+
+    @since 5.2 *)
 
 val nativeint : Nativeint.t -> Nativeint.t
 (** [Random5.nativeint bound] returns a random integer between 0 (inclusive)
-     and [bound] (exclusive).  [bound] must be greater than 0. *)
+     and [bound] (exclusive).  [bound] must be greater than 0.
+
+    @raise Invalid_argument if [bound] <= 0.
+*)
+
+val nativeint_in_range : min:nativeint -> max:nativeint -> nativeint
+(** [Random5.nativeint_in_range ~min ~max] returns a random integer
+    between [min] (inclusive) and [max] (inclusive).
+    Both [min] and [max] are allowed to be negative;
+    [min] must be less than or equal to [max].
+
+    @raise Invalid_argument if [min > max].
+
+    @since 5.2 *)
 
 val int64 : Int64.t -> Int64.t
 (** [Random5.int64 bound] returns a random integer between 0 (inclusive)
-     and [bound] (exclusive).  [bound] must be greater than 0. *)
+     and [bound] (exclusive).  [bound] must be greater than 0.
+
+    @raise Invalid_argument if [bound] <= 0.
+*)
+
+val int64_in_range : min:int64 -> max:int64 -> int64
+(** [Random.int64_in_range ~min ~max] returns a random integer
+    between [min] (inclusive) and [max] (inclusive).
+    Both [min] and [max] are allowed to be negative;
+    [min] must be less than or equal to [max].
+
+    @raise Invalid_argument if [min > max].
+
+    @since 5.2 *)
 
 val float : float -> float
 (** [Random5.float bound] returns a random floating-point number
@@ -91,13 +158,13 @@ val bits32 : unit -> Int32.t
 val bits64 : unit -> Int64.t
 (** [Random5.bits64 ()] returns 64 random bits as an integer between
     {!Int64.min_int} and {!Int64.max_int}.
- *)
+    @since 4.14 *)
 
 val nativebits : unit -> Nativeint.t
 (** [Random5.nativebits ()] returns 32 or 64 random bits (depending on
     the bit width of the platform) as an integer between
     {!Nativeint.min_int} and {!Nativeint.max_int}.
-*)
+    @since 4.14 *)
 
 (** {1 Advanced functions} *)
 
@@ -126,9 +193,13 @@ module State : sig
   val bits : t -> int
   val int : t -> int -> int
   val full_int : t -> int -> int
+  val int_in_range : t -> min:int -> max:int -> int
   val int32 : t -> Int32.t -> Int32.t
+  val int32_in_range : t -> min:int32 -> max:int32 -> int32
   val nativeint : t -> Nativeint.t -> Nativeint.t
+  val nativeint_in_range : t -> min:nativeint -> max:nativeint -> nativeint
   val int64 : t -> Int64.t -> Int64.t
+  val int64_in_range : t -> min:int64 -> max:int64 -> int64
   val float : t -> float -> float
   val bool : t -> bool
   val bits32 : t -> Int32.t
@@ -140,10 +211,11 @@ module State : sig
 
   val split : t -> t
   (** Draw a fresh PRNG state from the given PRNG state.
+      (The given PRNG state is modified.)
       The new PRNG is statistically independent from the given PRNG.
       Data can be drawn from both PRNGs, in any order, without risk of
       correlation.  Both PRNGs can be split later, arbitrarily many times.
-   *)
+      @since 5.0 *)
 
   val to_binary_string : t -> string
   (** Serializes the PRNG state into an immutable sequence of bytes.
@@ -180,13 +252,17 @@ module State : sig
 end
 
 val get_state : unit -> State.t
-(** Return the current state of the domain-local generator used by the basic
-    functions. *)
+(** [get_state()] returns a fresh copy of the current state of the
+    domain-local generator (which is used by the basic functions). *)
 
 val set_state : State.t -> unit
-(** Set the state of the domain-local generator used by the basic functions. *)
+(** [set_state s] updates the current state of the domain-local
+    generator (which is used by the basic functions) by copying
+    the state [s] into it. *)
 
 val split : unit -> State.t
 (** Draw a fresh PRNG state from the current state of the domain-local
-    generator used by the default functions.  See {!Random5.State.split}.
-*)
+    generator used by the default functions.
+    (The state of the domain-local generator is modified.)
+    See {!Random5.State.split}.
+    @since 5.0 *)

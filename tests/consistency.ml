@@ -25,7 +25,7 @@ module R3_equal_R4:sig module type t = r3 end = struct
   module type t = r4
 end
 
-#if OCAML_VERSION >= (5,1,0)
+#if OCAML_VERSION >= (5,2,0)
 module R5_equal_Stdlib: sig module type t = r5 end = struct
   module type t = module type of Stdlib__Random
 end
