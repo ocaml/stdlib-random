@@ -1,3 +1,12 @@
+Release 1.2.0
+-------------
+
+   - `stdlib-random.v5` and `stdlib-random.v5o`: import `Random.int_in_range`
+     functions and friends from OCaml 5.2.
+
+   - `stdlib-random.v3` and `stdlib-random.v4` library: implement
+     `Random.int_in_range` functions and friends.
+
 Release 1.1.0
 -------------
 
