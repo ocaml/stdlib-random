@@ -17,12 +17,10 @@
 )
 
 (tests
- (names binary_string_roundtrip binary_string_stability)
- (modules binary_string_roundtrip binary_string_stability)
+ (names binary_string_roundtrip binary_string_stability chi2)
+ (modules binary_string_roundtrip binary_string_stability chi2)
  (libraries random3 random4 random5 random5o)
 )
-
-
 
 (test
  (name consistency)
