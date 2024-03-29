@@ -291,7 +291,7 @@ let _ =
 
 end
 
-module _ = Test(struct let name = "Random3" end)(Random3)
-module _ = Test(struct let name = "Random4" end)(Random4)
-module _ = Test(struct let name = "Random5" end)(Random5)
-module _ = Test(struct let name = "Random5o" end)(Random5o)
+module R3 = Test(struct let name = "Random3" end)(Random3)
+module R4 = Test(struct let name = "Random4" end)(Random4)
+module R5 = Test(struct let name = "Random5" end)(Random5)
+module R6 = Test(struct let name = "Random5o" end)(Random5o)
